@@ -119,14 +119,17 @@ pipeline {
         always {
             script {
                 // Only archive if log exists
-                if (fileExists("${env.PKG_WRKSP}/build_details.log")) {
-                    archiveArtifacts artifacts: "${env.PKG_WRKSP}/build_details.log", allowEmptyArchive: true
+                def relativeLogPath = env.PKG_WRKSP.replace("${env.WORKSPACE}/", "") + "/build_details.log"
+                if (fileExists(relativeLogPath)) {
+                    archiveArtifacts artifacts: relativeLogPath, allowEmptyArchive: true
                 }
             }
             sh '''#!/bin/bash
-                # Safe cleanup - only remove if SYSTMP is under workspace
                 if [[ -n "${PKG_WRKSP}" && "${PKG_WRKSP}" == "${WORKSPACE}/"* ]]; then
-                    [[ "${KEEP_LOGS}" != "YES" ]] && rm -rf "${SYSTMP}"
+                    if [[ "${KEEP_LOGS}" != "YES" ]]; then
+                        echo "Cleaning up temporary files in ${SYSTMP}"
+                        rm -rf "${SYSTMP}"
+                    fi
                 fi
             '''
         }
