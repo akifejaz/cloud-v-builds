@@ -1,6 +1,6 @@
 /*
 NOTE: This Jenkinsfile is designed to build packages RISC-V architecture.
-      If you are this script make sure to setup environment and also 
+      If you are using this script make sure to setup environment and also 
       add build steps for your specific packages in the build_steps() function.
 */
 
@@ -13,7 +13,6 @@ pipeline {
         // Package details
         PKG_NAME   = "oras"  
         PKG_REPO   = "https://github.com/oras-project/oras/"  
-        PKG_WRKSP  = "${WORKSPACE}/main/$(uname -m)-Linux/${PKG_NAME}"
 
         // General configuration
         SYSTMP            = "${WORKSPACE}/tmp"  
