@@ -47,15 +47,14 @@ pipeline {
         }
 
         stage('Log Build Details') {
-            steps {
-                script {
+                steps {
+                    script {
                     def arch = sh(script: 'uname -m', returnStdout: true).trim()
                     def hostname = sh(script: 'hostname', returnStdout: true).trim()
                     def user = sh(script: 'whoami', returnStdout: true).trim()
                     def agentName = env.NODE_NAME ?: 'unknown'
 
-                    // save build details to a log file
-                    sh '''
+                    sh """
                         {
                         echo "===== Build Environment ====="
                         echo "Agent Name      : ${agentName}"
@@ -69,13 +68,12 @@ pipeline {
                         echo "Package Repo    : ${env.PKG_REPO}"
                         echo "Package Wrksp   : ${env.PKG_WRKSP}"
                         echo "User Agent      : ${env.USER_AGENT}"
-                        echo "Timestamp       : $(date -Iseconds)"
+                        echo "Timestamp       : \$(date -Iseconds)"
                         } > "${env.SYSTMP}/build_details.log"
-                    '''
-                    sh '''cat "${env.SYSTMP}/build_details.log"'''
+                    """
+                    sh "cat '${env.SYSTMP}/build_details.log'"
                 }
             }
-
         }
 
         stage('Setup Repository') {
