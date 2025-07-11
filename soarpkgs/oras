@@ -70,7 +70,6 @@ pipeline {
                         echo "Package Name    : ${env.PKG_NAME}"
                         echo "Package Repo    : ${env.PKG_REPO}"
                         echo "Package Wrksp   : ${env.PKG_WRKSP}"
-                        echo "User Agent      : ${env.USER_AGENT}"
                         echo "Timestamp       : $(date -Iseconds)"
                         } > '${env.SYSTMP}/build_details.log'
                     """
