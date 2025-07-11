@@ -155,7 +155,7 @@ pipeline {
     The build_steps function is a placeholder for your specific build logic.
 */
 def build_steps(pkgName, pkgWrksp) {
-    sh """
+    sh '''#!/bin/bash
         set -euxo pipefail
 
         echo "[*] Starting build for: ${pkgName}"
@@ -179,6 +179,6 @@ def build_steps(pkgName, pkgWrksp) {
         make build-linux-riscv64
 
         echo "[✓] Build and test completed for: ${pkgName}"
-    """
+    '''
 }
 
