@@ -71,9 +71,9 @@ pipeline {
                         echo "Package Wrksp   : ${env.PKG_WRKSP}"
                         echo "User Agent      : ${env.USER_AGENT}"
                         echo "Timestamp       : \$(date -Iseconds)"
-                        } > "${env.SYSTMP}/build_details.log"
+                        } > "${env.PKG_WRKSP}/build_details.log"
                     """
-                    sh "cat '${env.SYSTMP}/build_details.log'"
+                    sh "cat '${env.PKG_WRKSP}/build_details.log'"
                 }
             }
         }
@@ -119,13 +119,13 @@ pipeline {
         always {
             script {
                 // Only archive if log exists
-                if (fileExists("${env.SYSTMP}/build_details.log")) {
-                    archiveArtifacts artifacts: "${env.SYSTMP}/build_details.log", allowEmptyArchive: true
+                if (fileExists("${env.PKG_WRKSP}/build_details.log")) {
+                    archiveArtifacts artifacts: "${env.PKG_WRKSP}/build_details.log", allowEmptyArchive: true
                 }
             }
             sh '''#!/bin/bash
                 # Safe cleanup - only remove if SYSTMP is under workspace
-                if [[ -n "${SYSTMP}" && "${SYSTMP}" == "${WORKSPACE}/"* ]]; then
+                if [[ -n "${PKG_WRKSP}" && "${PKG_WRKSP}" == "${WORKSPACE}/"* ]]; then
                     [[ "${KEEP_LOGS}" != "YES" ]] && rm -rf "${SYSTMP}"
                 fi
             '''
