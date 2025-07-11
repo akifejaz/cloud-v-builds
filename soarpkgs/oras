@@ -32,14 +32,13 @@ pipeline {
                     env.PKG_WRKSP = "${env.WORKSPACE}/main/${arch}-Linux/${env.PKG_NAME}"
                     echo "Package workspace path: ${env.PKG_WRKSP}"
 
-                    // Create necessary directories
                     sh """
                         mkdir -p "${env.PKG_WRKSP}"
                         mkdir -p "${env.SYSTMP}"
 
-                        # Install core dependencies (without sudo)
+                        # Install core dependencies
                         sudo apt-get update && 
-                        sudo apt-get install bc coreutils curl dos2unix fdupes jq moreutils wget \
+                        sudo apt-get install -y bc coreutils curl dos2unix fdupes jq moreutils wget \
                         apt-transport-https apt-utils ca-certificates gnupg2 \
                         p7zip-full rename rsync software-properties-common texinfo tmux util-linux
                     """
