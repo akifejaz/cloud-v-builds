@@ -38,11 +38,10 @@ pipeline {
                         mkdir -p "${env.SYSTMP}"
 
                         # Install core dependencies (without sudo)
-                        sudo apt-get update && sudo apt-get install
-                        bc coreutils curl dos2unix fdupes jq moreutils wget \
+                        sudo apt-get update && 
+                        sudo apt-get install bc coreutils curl dos2unix fdupes jq moreutils wget \
                         apt-transport-https apt-utils ca-certificates gnupg2 \
                         p7zip-full rename rsync software-properties-common texinfo tmux util-linux
-                    
                     """
                 }
             }
