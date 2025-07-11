@@ -92,10 +92,6 @@ pipeline {
         }
 
         stage('Build Package') {
-            environment {
-                SYSTMP = "${WORKSPACE}/tmp"  
-                LOCAL_BIN = "${WORKSPACE}/.local/bin"
-            }
             steps {
                 script {
                     echo "Running function build_steps() for ${env.PKG_NAME}..."
@@ -147,7 +143,7 @@ pipeline {
     The build_steps function is a placeholder for your specific build logic.
 */
 def build_steps(pkgName, pkgWrksp) {
-    sh '''#!/bin/bash
+    sh """#!/bin/bash
         set -euxo pipefail
 
         echo "[*] Starting build for: ${pkgName}"
@@ -160,8 +156,8 @@ def build_steps(pkgName, pkgWrksp) {
 
         echo "[*] Installing Go..."
         export GO_VERSION="1.23.11"
-        wget -q "https://go.dev/dl/go\${GO_VERSION}.linux-$(uname -m).tar.gz"
-        rm -rf /usr/local/go && tar -C /usr/local -xzf "go\${GO_VERSION}.linux-$(uname -m).tar.gz"
+        wget -q "https://go.dev/dl/go\${GO_VERSION}.linux-\$(uname -m).tar.gz"
+        rm -rf /usr/local/go && tar -C /usr/local -xzf "go\${GO_VERSION}.linux-\$(uname -m).tar.gz"
         export PATH="/usr/local/go/bin:\$PATH"
 
         echo "[*] Go version:"
@@ -171,6 +167,7 @@ def build_steps(pkgName, pkgWrksp) {
         make build-linux-riscv64
 
         echo "[✓] Build and test completed for: ${pkgName}"
-    '''
+    """
 }
+
 
