@@ -57,7 +57,7 @@ pipeline {
                     def agentName = env.NODE_NAME ?: 'unknown'
 
                     // save build details to a log file
-                    sh """
+                    sh '''
                         {
                         echo "===== Build Environment ====="
                         echo "Agent Name      : ${agentName}"
@@ -70,9 +70,10 @@ pipeline {
                         echo "Package Name    : ${env.PKG_NAME}"
                         echo "Package Repo    : ${env.PKG_REPO}"
                         echo "Package Wrksp   : ${env.PKG_WRKSP}"
+                        echo "User Agent      : ${env.USER_AGENT}"
                         echo "Timestamp       : $(date -Iseconds)"
                         } > '${env.SYSTMP}/build_details.log'
-                    """
+                    '''
                     sh "cat '${env.SYSTMP}/build_details.log'"
                 }
             }
