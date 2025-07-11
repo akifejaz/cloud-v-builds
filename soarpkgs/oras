@@ -70,9 +70,9 @@ pipeline {
                         echo "Package Wrksp   : ${env.PKG_WRKSP}"
                         echo "User Agent      : ${env.USER_AGENT}"
                         echo "Timestamp       : $(date -Iseconds)"
-                        } > '${env.SYSTMP}/build_details.log'
+                        } > "${env.SYSTMP}/build_details.log"
                     '''
-                    sh "cat '${env.SYSTMP}/build_details.log'"
+                    sh '''cat "${env.SYSTMP}/build_details.log"'''
                 }
             }
 
