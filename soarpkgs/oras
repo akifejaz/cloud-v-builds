@@ -1,0 +1,185 @@
+/*
+NOTE: This Jenkinsfile is designed to build packages RISC-V architecture.
+      If you are this script make sure to setup environment and also 
+      add build steps for your specific packages in the build_steps() function.
+*/
+
+pipeline {
+    agent { label 'jupiter-16G-1' }  // Using riscv machine (milk-v/jupiter)
+
+    environment {
+         
+
+        // Package details
+        PKG_NAME   = "oras"  
+        PKG_REPO   = "https://github.com/oras-project/oras/"  
+        PKG_WRKSP  = "${WORKSPACE}/main/$(uname -m)-Linux/${PKG_NAME}"
+
+        // General configuration
+        SYSTMP            = "${WORKSPACE}/tmp"  
+        USER_AGENT        = "Mozilla/5.0" 
+        EXCLUDE_CACHED    = "YES"
+        FORCE_REBUILD_ALL = "NO"
+        KEEP_LOGS         = "YES"
+        NOTIFY_DISCORD    = "NO"
+    }
+
+    stages {
+        stage('Setup Workspace') {
+            // Create dir. in WORKSPACE for PKG_NAME
+            steps {                
+                script {
+                    def arch = sh(script: 'uname -m', returnStdout: true).trim()
+                    env.PKG_WRKSP = "${env.WORKSPACE}/main/${arch}-Linux/${env.PKG_NAME}"
+                    echo "Package workspace path: ${env.PKG_WRKSP}"
+
+                    // Create necessary directories
+                    sh """
+                        mkdir -p "${env.PKG_WRKSP}"
+                        mkdir -p "${env.SYSTMP}"
+
+                        # Install core dependencies (without sudo)
+                        apt-get update -y && apt-get install -y \
+                        bc coreutils curl dos2unix fdupes jq moreutils wget \
+                        apt-transport-https apt-utils ca-certificates gnupg2 \
+                        p7zip-full rename rsync software-properties-common texinfo tmux util-linux
+                    
+                    """
+                }
+            }
+        }
+
+        stage('Log Build Details') {
+            steps {
+                script {
+                    def arch = sh(script: 'uname -m', returnStdout: true).trim()
+                    def hostname = sh(script: 'hostname', returnStdout: true).trim()
+                    def user = sh(script: 'whoami', returnStdout: true).trim()
+                    def agentName = env.NODE_NAME ?: 'unknown'
+
+                    // save build details to a log file
+                    sh """
+                        {
+                        echo "===== Build Environment ====="
+                        echo "Agent Name      : ${agentName}"
+                        echo "User            : ${user}"
+                        echo "Hostname        : ${hostname}"
+                        echo "Architecture    : ${arch}"
+                        echo "Workspace       : ${env.WORKSPACE}"
+                        echo ""
+                        echo "===== Package Details ====="
+                        echo "Package Name    : ${env.PKG_NAME}"
+                        echo "Package Repo    : ${env.PKG_REPO}"
+                        echo "Package Wrksp   : ${env.PKG_WRKSP}"
+                        echo "User Agent      : ${env.USER_AGENT}"
+                        echo "Timestamp       : $(date -Iseconds)"
+                        } > '${env.SYSTMP}/build_details.log'
+                    """
+                    sh "cat '${env.SYSTMP}/build_details.log'"
+                }
+            }
+
+        }
+
+        stage('Setup Repository') {
+            steps {
+                sh '''#!/bin/bash
+                    set -x
+                    echo "Setting up $PKG_REPO repository... "
+                    
+                    cd "${PKG_WRKSP}" || exit 1
+                    git clone --depth 1 "${PKG_REPO}" ./${PKG_NAME}
+                    cd "${PKG_NAME}" || exit 1
+                    ls -la
+                    echo "Repository setup complete."
+                '''
+            }
+        }
+
+        stage('Build Package') {
+            environment {
+                SYSTMP = "${WORKSPACE}/tmp"  
+                LOCAL_BIN = "${WORKSPACE}/.local/bin"
+            }
+            steps {
+                sh '''#!/bin/bash
+                    set -x
+                    set +e
+                    
+                    echo "Running function build_steps() for ${PKG_NAME}..."
+                    build_steps(env.PKG_NAME, env.PKG_WRKSP)
+
+                    echo "Build steps completed for ${PKG_NAME}."
+                '''
+            }
+        }
+
+        stage('Post-Build Cleanup') {
+            steps {
+                sh '''#!/bin/bash
+                    echo "Cleaning up temporary files..."
+                    if [[ "${KEEP_LOGS}" != "YES" ]]; then
+                        rm -rf "${SYSTMP}"
+                    fi
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                // Only archive if log exists
+                if (fileExists("${env.SYSTMP}/build_details.log")) {
+                    archiveArtifacts artifacts: "${env.SYSTMP}/build_details.log", allowEmptyArchive: true
+                }
+            }
+            sh '''#!/bin/bash
+                # Safe cleanup - only remove if SYSTMP is under workspace
+                if [[ -n "${SYSTMP}" && "${SYSTMP}" == "${WORKSPACE}/"* ]]; then
+                    [[ "${KEEP_LOGS}" != "YES" ]] && rm -rf "${SYSTMP}"
+                fi
+            '''
+        }
+        success {
+            echo "Pipeline completed successfully"
+        }
+        failure {
+            echo "Pipeline failed - check build logs"
+        }
+    }
+}
+
+
+/* NOTE: 
+    Update the steps for your package as needed
+    The build_steps function is a placeholder for your specific build logic.
+*/
+def build_steps(pkgName, pkgWrksp) {
+    sh """
+        set -euxo pipefail
+
+        echo "[*] Starting build for: ${pkgName}"
+        echo "[*] Working directory: ${pkgWrksp}"
+
+        cd "${pkgWrksp}/${pkgName}" || {
+            echo "[!] Failed to enter source directory."
+            exit 1
+        }
+
+        echo "[*] Installing Go..."
+        export GO_VERSION="1.23.11"
+        wget -q "https://go.dev/dl/go\${GO_VERSION}.linux-$(uname -m).tar.gz"
+        rm -rf /usr/local/go && tar -C /usr/local -xzf "go\${GO_VERSION}.linux-$(uname -m).tar.gz"
+        export PATH="/usr/local/go/bin:\$PATH"
+
+        echo "[*] Go version:"
+        go version
+
+        echo "[*] Running: make build-linux-riscv64"
+        make build-linux-riscv64
+
+        echo "[✓] Build and test completed for: ${pkgName}"
+    """
+}
+
