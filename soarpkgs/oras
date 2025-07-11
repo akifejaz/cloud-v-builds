@@ -83,7 +83,7 @@ pipeline {
                     echo "Setting up $PKG_REPO repository... "
                     
                     cd "${PKG_WRKSP}" || exit 1
-                    git clone --depth 1 "${PKG_REPO}" ./${PKG_NAME}
+                    git clone --depth 1 "${PKG_REPO}" --recurse-submodules ./${PKG_NAME}
                     cd "${PKG_NAME}" || exit 1
                     ls -la
                     echo "Repository setup complete."
@@ -97,15 +97,11 @@ pipeline {
                 LOCAL_BIN = "${WORKSPACE}/.local/bin"
             }
             steps {
-                sh '''#!/bin/bash
-                    set -x
-                    set +e
-                    
-                    echo "Running function build_steps() for ${PKG_NAME}..."
+                script {
+                    echo "Running function build_steps() for ${env.PKG_NAME}..."
                     build_steps(env.PKG_NAME, env.PKG_WRKSP)
-
-                    echo "Build steps completed for ${PKG_NAME}."
-                '''
+                    echo "Build steps completed for ${env.PKG_NAME}."
+                }
             }
         }
 
